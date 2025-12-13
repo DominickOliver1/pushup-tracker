@@ -344,6 +344,10 @@
 
     <div class="label">Google Apps Script URL (optional)</div>
     <input id="apiUrl" placeholder="Paste Google Apps Script URL (optional)" />
+    <div class="btnRow">
+      <button class="secondary" onclick="importFromSheets()">Restore from Google Sheets</button>
+      <button class="secondary" onclick="retryQueuedSync()">Retry Pending Sync</button>
+    </div>
 
     <div class="row">
       <div>
@@ -705,30 +709,22 @@ function logSet(){
 // -----------------------------
 const LS_QUEUE = 'pushups_sync_queue';
 
-function getQueue(){
-  return JSON.parse(localStorage.getItem(LS_QUEUE) || '[]');
-}
-
-function saveQueue(q){
-  localStorage.setItem(LS_QUEUE, JSON.stringify(q));
-}
+function getQueue(){ return JSON.parse(localStorage.getItem(LS_QUEUE) || '[]'); }
+function saveQueue(q){ localStorage.setItem(LS_QUEUE, JSON.stringify(q)); }
 
 function syncToSheets(entry){
   const url = document.getElementById('apiUrl').value.trim();
-  if (!url) return; // optional feature
-
-  const payload = { ...entry };
+  if (!url) return;
 
   fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(entry)
   })
   .then(r => { if (!r.ok) throw new Error('Sync failed'); })
   .catch(() => {
-    // Queue for later retry
     const q = getQueue();
-    q.push(payload);
+    q.push(entry);
     saveQueue(q);
   });
 }
@@ -741,7 +737,6 @@ function retryQueuedSync(){
   if (!q.length) return;
 
   const remaining = [];
-
   Promise.all(q.map(item =>
     fetch(url, {
       method: 'POST',
@@ -749,6 +744,41 @@ function retryQueuedSync(){
       body: JSON.stringify(item)
     }).catch(() => remaining.push(item))
   )).finally(() => saveQueue(remaining));
+}
+
+// -----------------------------
+// Google Sheets Import (MERGE + DEDUPE)
+// -----------------------------
+function entryKey(e){
+  return `${e.date}|${e.reps}|${e.type}`;
+}
+
+async function importFromSheets(){
+  const url = document.getElementById('apiUrl').value.trim();
+  if (!url) return alert('Paste your Google Apps Script URL first');
+
+  let remote;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Fetch failed');
+    remote = await res.json();
+    if (!Array.isArray(remote)) throw new Error('Invalid sheet data');
+  } catch (e) {
+    alert('Failed to fetch data from Google Sheets');
+    return;
+  }
+
+  const local = getLog();
+  const map = new Map();
+
+  for (const e of local) map.set(entryKey(e), e);
+  for (const e of remote) map.set(entryKey(e), e);
+
+  const merged = Array.from(map.values()).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  saveLog(merged);
+  render();
+
+  alert(`Restore complete. ${merged.length} total sets after merge.`);
 }
 
 // -----------------------------
