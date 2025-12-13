@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Push-Up Tracker</title>
+  <style>
+    :root {
+      --bg0: #020617;
+      --bg1: #0b1020;
+      --card: #0b1222;
+      --card2: #071126;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --border: rgba(148,163,184,0.14);
+      --primary: #2563eb;
+      --accent: #22c55e;
+      --accent2: #16a34a;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at top, #111827 0%, #020617 55%, #020617 100%);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+    }
+
+    .wrap { max-width: 560px; margin: 0 auto; }
+
+    h1 { margin: 0 0 10px; font-size: 24px; }
+    h2 { margin: 0 0 12px; font-size: 18px; color: #d1d5db; }
+
+    .card {
+      background: linear-gradient(180deg, rgba(17,24,39,0.92), rgba(2,6,23,0.95));
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .row > * { flex: 1; min-width: 120px; }
+
+    .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 10px 0 6px;
+      letter-spacing: .02em;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(2,6,23,0.9);
+      color: var(--text);
+      font-size: 16px;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: rgba(34,197,94,0.45);
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.14);
+    }
+
+    button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(180deg, #2563eb, #1d4ed8);
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: linear-gradient(180deg, rgba(148,163,184,0.18), rgba(148,163,184,0.08));
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    button.ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .btnRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .stat {
+      background: linear-gradient(180deg, rgba(15,23,42,0.92), rgba(2,6,23,0.92));
+      border-radius: 16px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat .k {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: .06em;
+    }
+
+    .stat .v {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--accent);
+      margin-top: 6px;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .trend {
+      font-size: 12px;
+      font-weight: 900;
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(148,163,184,0.10);
+      color: #e2e8f0;
+    }
+
+    .trend.up { background: rgba(34,197,94,0.10); color: #86efac; }
+    .trend.down { background: rgba(239,68,68,0.10); color: #fecaca; }
+    .trend.flat { background: rgba(148,163,184,0.10); color: #e2e8f0; }
+
+    .stat .s {
+      font-size: 13px;
+      color: #e5e7eb;
+      margin-top: 6px;
+    }
+
+    .progressWrap { margin-top: 10px; }
+
+    .progressBar {
+      height: 10px;
+      width: 100%;
+      background: rgba(148,163,184,0.12);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progressFill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      border-radius: 999px;
+      transition: width 220ms ease;
+    }
+
+    .muted { color: var(--muted); font-size: 13px; }
+
+    .history-item {
+      background: linear-gradient(180deg, rgba(15,23,42,0.92), rgba(2,6,23,0.92));
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 10px;
+      border: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .history-item .left { min-width: 0; }
+
+    .history-item .reps {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1.1;
+    }
+
+    .history-item .date {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .tag {
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(148,163,184,0.10);
+      color: #e2e8f0;
+      white-space: nowrap;
+    }
+
+    .sectionTitleRow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Calendar */
+    .calHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .calHeader .controls { display: flex; gap: 10px; align-items: center; }
+
+    .calHeader button {
+      width: auto;
+      margin-top: 0;
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 14px;
+    }
+
+    .calGrid {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+    }
+
+    .dow {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: .06em;
+    }
+
+    .dayCell {
+      height: 64px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(2,6,23,0.7);
+      padding: 10px;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .dayCell.dim { opacity: 0.45; }
+
+    .dayCell .num {
+      font-weight: 800;
+      font-size: 13px;
+      color: #e5e7eb;
+    }
+
+    .dayCell .sum {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      font-weight: 900;
+      font-size: 14px;
+      color: var(--accent);
+    }
+
+    .dayCell.hit::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(34,197,94,0.25), rgba(34,197,94,0.05));
+      pointer-events: none;
+    }
+
+    .dayCell.today { outline: 2px solid rgba(37,99,235,0.7); }
+    .dayCell.selected { outline: 2px solid rgba(34,197,94,0.9); }
+
+    /* Lists */
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .listItem {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      background: linear-gradient(180deg, rgba(15,23,42,0.92), rgba(2,6,23,0.92));
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .listItem .title { font-weight: 900; }
+    .listItem .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .listItem .right { text-align: right; }
+    .listItem .right .big { font-weight: 900; color: var(--accent); font-size: 18px; }
+    .listItem .right .small { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    /* Charts */
+    canvas { width: 100%; height: 190px; display: block; }
+
+    .miniNote { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+    .hidden { display: none; }
+
+    .chipRow { display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; }
+    .chip {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: #e2e8f0;
+      background: rgba(148,163,184,0.10);
+      cursor: pointer;
+      user-select:none;
+    }
+    .chip.active { outline: 2px solid rgba(34,197,94,0.9); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Log Set -->
+  <div class="card">
+    <h1>Push-Up Tracker</h1>
+
+    <div class="label">Google Apps Script URL (optional)</div>
+    <input id="apiUrl" placeholder="Paste Google Apps Script URL (optional)" />
+
+    <div class="row">
+      <div>
+        <div class="label">Reps</div>
+        <input id="reps" type="number" inputmode="numeric" placeholder="e.g., 25" />
+      </div>
+      <div>
+        <div class="label">Type</div>
+        <select id="type">
+          <option value="Standard" selected>Standard</option>
+          <option value="Wide">Wide</option>
+          <option value="Diamond">Diamond</option>
+          <option value="Incline">Incline</option>
+          <option value="Decline">Decline</option>
+        </select>
+      </div>
+    </div>
+
+    <button onclick="logSet()">Log Set</button>
+  </div>
+
+  <!-- Goal + Progress -->
+  <div class="card">
+    <div class="sectionTitleRow">
+      <h2>Goal & Progress</h2>
+      <div class="muted" id="streakText">Streak: 0 days</div>
+    </div>
+
+    <div class="label">Daily Goal (reps)</div>
+    <div class="row">
+      <input id="dailyGoal" type="number" inputmode="numeric" placeholder="e.g., 50" />
+      <button class="secondary" style="width:auto; min-width: 140px; margin-top: 0;" onclick="saveGoal()">Save Goal</button>
+    </div>
+
+    <div class="label">Today's Progress</div>
+    <div class="progressWrap">
+      <div class="progressBar"><div class="progressFill" id="progressFill"></div></div>
+      <div class="muted" id="progressText" style="margin-top:8px;">0 / 0</div>
+    </div>
+
+    <div class="btnRow">
+      <button class="secondary" onclick="showPanel('calendar')">Calendar</button>
+      <button class="secondary" onclick="showPanel('weekly')">Weekly Report</button>
+    </div>
+
+    <div class="btnRow">
+      <button class="secondary" onclick="showPanel('monthly')">Monthly Report</button>
+      <button class="secondary" onclick="showPanel('breakdown')">Weekly Breakdown</button>
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="card" id="panelCalendar">
+    <div class="sectionTitleRow">
+      <h2>Calendar</h2>
+      <div class="muted" id="calHint">Tap a day to view totals</div>
+    </div>
+
+    <div class="calHeader">
+      <div>
+        <div style="font-weight:900; font-size:18px;" id="calMonthLabel">—</div>
+        <div class="muted" id="calSelectedLabel">Selected: Today</div>
+      </div>
+      <div class="controls">
+        <button class="ghost" onclick="navMonth(-1)">◀</button>
+        <button class="ghost" onclick="goToday()">Today</button>
+        <button class="ghost" onclick="navMonth(1)">▶</button>
+      </div>
+    </div>
+
+    <div class="calGrid" id="calDow"></div>
+    <div class="calGrid" id="calGrid"></div>
+
+    <div class="miniNote" id="dayDetail"></div>
+  </div>
+
+  <!-- Weekly Report -->
+  <div class="card hidden" id="panelWeekly">
+    <div class="sectionTitleRow">
+      <h2>Weekly Report</h2>
+      <div class="muted" id="weekKeyLabel">—</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="k">THIS WEEK</div>
+        <div class="v"><span id="thisWeekTotal">0</span><span class="trend flat" id="thisWeekTrend">—</span></div>
+        <div class="s" id="vsLastWeek">vs last week: 0%</div>
+      </div>
+      <div class="stat">
+        <div class="k">CONSISTENCY</div>
+        <div class="v" style="font-size:22px;"><span id="consistency">0/7</span></div>
+        <div class="s" id="bestDayLine">Best day: —</div>
+      </div>
+      <div class="stat">
+        <div class="k">LAST WEEK</div>
+        <div class="v"><span id="lastWeekTotal">0</span></div>
+        <div class="s">Total reps last week</div>
+      </div>
+      <div class="stat">
+        <div class="k">MOST COMMON TYPE</div>
+        <div class="v" style="font-size:20px;"><span id="mostCommonType">—</span></div>
+        <div class="s" id="mostCommonTypeLine">—</div>
+      </div>
+    </div>
+
+    <div class="miniNote" style="margin-top:10px;">Weeks are Monday–Sunday (ISO weeks).</div>
+  </div>
+
+  <!-- Monthly Report -->
+  <div class="card hidden" id="panelMonthly">
+    <div class="sectionTitleRow">
+      <h2>Monthly Report</h2>
+      <div class="muted" id="monthKeyLabel">—</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="k">THIS MONTH</div>
+        <div class="v"><span id="thisMonthTotal">0</span><span class="trend flat" id="thisMonthTrend">—</span></div>
+        <div class="s" id="vsLastMonth">vs last month: 0%</div>
+      </div>
+      <div class="stat">
+        <div class="k">ACTIVE DAYS</div>
+        <div class="v" style="font-size:22px;"><span id="monthActiveDays">0</span></div>
+        <div class="s" id="monthAvgLine">Avg per active day: 0</div>
+      </div>
+      <div class="stat">
+        <div class="k">LAST MONTH</div>
+        <div class="v"><span id="lastMonthTotal">0</span></div>
+        <div class="s">Total reps last month</div>
+      </div>
+      <div class="stat">
+        <div class="k">WEEKS TRAINED</div>
+        <div class="v" style="font-size:22px;"><span id="weeksTrained">0</span></div>
+        <div class="s" id="weeksTrainedLine">Consecutive weeks: 0</div>
+      </div>
+    </div>
+
+    <div class="miniNote" style="margin-top:10px;">Months use your local calendar month.</div>
+  </div>
+
+  <!-- Weekly Breakdown -->
+  <div class="card hidden" id="panelBreakdown">
+    <div class="sectionTitleRow">
+      <h2>Weekly Breakdown</h2>
+      <div class="muted" id="breakdownHint">Tap a week to view details</div>
+    </div>
+
+    <div class="chipRow" id="breakdownChips"></div>
+
+    <div class="list" id="weekList"></div>
+
+    <div class="card" style="margin-top:12px;">
+      <div class="sectionTitleRow">
+        <h2 style="margin:0;">Week Details</h2>
+        <div class="muted" id="weekDetailLabel">—</div>
+      </div>
+      <div class="miniNote" id="weekDetailStats">Select a week above.</div>
+      <div class="list" id="weekDetailDays"></div>
+    </div>
+  </div>
+
+  <!-- Reports & Stats (core) -->
+  <div class="card">
+    <h2>Reports & Stats</h2>
+    <div class="stats-grid">
+      <div class="stat"><div class="k">TOTAL WORKOUTS</div><div class="v"><span id="totalWorkouts">0</span></div><div class="s">Days with activity</div></div>
+      <div class="stat"><div class="k">TOTAL REPS LOGGED</div><div class="v"><span id="totalReps">0</span><span class="trend flat" id="totalRepsTrend">—</span></div><div class="s" id="totalRepsTrendLine">Last 7d vs prev 7d</div></div>
+      <div class="stat"><div class="k">AVG REPS (PER SESSION)</div><div class="v"><span id="avgPerSession">0</span><span class="trend flat" id="avgTrend">—</span></div><div class="s">Per day (active days)</div></div>
+      <div class="stat"><div class="k">BEST SESSION</div><div id="bestSession" class="s">—</div><div class="s" id="bestSessionLine">Best day total</div></div>
+      <div class="stat"><div class="k">DAILY AVG REPS</div><div class="v"><span id="dailyAvg">0</span><span class="trend flat" id="dailyAvgTrend">—</span></div><div class="s">Across active days</div></div>
+      <div class="stat"><div class="k">WEEKLY AVG REPS</div><div class="v"><span id="weeklyAvg">0</span><span class="trend flat" id="weeklyAvgTrend">—</span></div><div class="s">Average weekly totals</div></div>
+    </div>
+    <button onclick="downloadCSV()">⬇️ Download Log as CSV</button>
+  </div>
+
+  <!-- Personal Records -->
+  <div class="card">
+    <div class="sectionTitleRow">
+      <h2>Personal Records</h2>
+      <div class="muted">PRs update automatically</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat"><div class="k">BEST SET</div><div id="prBestSet" class="v">0</div></div>
+      <div class="stat"><div class="k">BEST DAY</div><div id="prBestDay" class="v">0</div></div>
+      <div class="stat"><div class="k">BEST WEEK</div><div id="prBestWeek" class="v">0</div></div>
+      <div class="stat"><div class="k">BEST MONTH</div><div id="prBestMonth" class="v">0</div></div>
+    </div>
+    <div class="miniNote" id="prNote"></div>
+  </div>
+
+  <!-- Achievements -->
+  <div class="card">
+    <div class="sectionTitleRow">
+      <h2>Achievements</h2>
+      <div class="muted">Auto-earned</div>
+    </div>
+    <div id="achievements" class="muted">No achievements yet.</div>
+  </div>
+
+  <!-- Weekly Volume Trend -->
+  <div class="card">
+    <div class="sectionTitleRow">
+      <h2>Weekly Volume Trend</h2>
+      <div class="muted">Last 8 weeks</div>
+    </div>
+    <canvas id="trendCanvas" width="520" height="190"></canvas>
+  </div>
+
+  <!-- Monthly Volume Trend -->
+  <div class="card">
+    <div class="sectionTitleRow">
+      <h2>Monthly Volume Trend</h2>
+      <div class="muted">Last 12 months</div>
+    </div>
+    <canvas id="monthCanvas" width="520" height="190"></canvas>
+  </div>
+
+  <!-- Type Distribution -->
+  <div class="card">
+    <div class="sectionTitleRow">
+      <h2>Type Distribution</h2>
+      <div class="muted">All-time</div>
+    </div>
+    <canvas id="pieCanvas" width="520" height="190"></canvas>
+    <div class="miniNote" id="typeLegend"></div>
+  </div>
+
+  <!-- Activity History -->
+  <div class="card">
+    <div class="sectionTitleRow">
+      <h2>Activity History</h2>
+      <div class="muted" id="historyCount">0 entries</div>
+    </div>
+    <div id="history"></div>
+  </div>
+
+</div>
+
+<script>
+// -----------------------------
+// Storage
+// -----------------------------
+const LS_LOG = 'pushups_log';
+const LS_GOAL = 'pushups_daily_goal';
+
+function storageAvailable() {
+  try {
+    const x = '__storage_test__';
+    localStorage.setItem(x, x);
+    localStorage.removeItem(x);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function getLog(){
+  try {
+    if (!storageAvailable()) {
+      console.warn('localStorage unavailable');
+      return window.__MEM_LOG || [];
+    }
+    return JSON.parse(localStorage.getItem(LS_LOG) || '[]');
+  } catch {
+    return window.__MEM_LOG || [];
+  }
+}
+
+// IMPORTANT: This used to contain a literal newline inside a quoted string, which breaks the entire script.
+// That parse error is what caused "logSet is not defined" (because the browser never finished parsing).
+function saveLog(d){
+  if (!storageAvailable()) {
+    window.__MEM_LOG = d;
+    alert(
+      "⚠️ Storage is blocked in this browser mode. Data will reset when the page reloads.\n\n" +
+      "Open the file in a normal browser window (not private/incognito)."
+    );
+    return;
+  }
+  localStorage.setItem(LS_LOG, JSON.stringify(d));
+}
+
+function getGoal(){ return Number(localStorage.getItem(LS_GOAL) || '0') || 0; }
+function setGoal(n){ localStorage.setItem(LS_GOAL, String(Number(n)||0)); }
+
+// -----------------------------
+// Helpers
+// -----------------------------
+function isoDate(d = new Date()) { return d.toISOString().slice(0,10); }
+function isoMonthKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+
+function startOfISOWeek(date){
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1 - day);
+  d.setHours(0,0,0,0);
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+
+function isoWeekKey(date){
+  const dt = new Date(date);
+  const tmp = new Date(Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()));
+  const dayNum = tmp.getUTCDay() || 7;
+  tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);
+  return `${tmp.getUTCFullYear()}-W${String(weekNo).padStart(2,'0')}`;
+}
+
+function fmtPct(n){
+  if (!Number.isFinite(n)) return '0%';
+  const sign = n > 0 ? '+' : '';
+  return `${sign}${n.toFixed(0)}%`;
+}
+
+function trendChip(deltaPct){
+  if (!Number.isFinite(deltaPct)) return { cls: 'flat', text: '—' };
+  if (Math.abs(deltaPct) < 0.5) return { cls: 'flat', text: '→ 0%' };
+  if (deltaPct > 0) return { cls: 'up', text: `↑ ${deltaPct.toFixed(0)}%` };
+  return { cls: 'down', text: `↓ ${Math.abs(deltaPct).toFixed(0)}%` };
+}
+
+function setTrend(elId, deltaPct){
+  const el = document.getElementById(elId);
+  const t = trendChip(deltaPct);
+  el.classList.remove('up','down','flat');
+  el.classList.add('trend', t.cls);
+  el.textContent = t.text;
+}
+
+// -----------------------------
+// Logging
+// -----------------------------
+// Must be global because HTML uses onclick="logSet()".
+function logSet(){
+  const reps = Number(document.getElementById('reps').value);
+  const type = String(document.getElementById('type').value || 'Standard');
+  if(!reps || reps <= 0) return alert('Enter reps');
+
+  const entry = { reps, type, date: new Date().toISOString() };
+
+  // 1️⃣ Always log locally first (instant, offline-safe)
+  const d = getLog();
+  d.push(entry);
+  saveLog(d);
+
+  // 2️⃣ Fire-and-forget Google Sheets sync (never blocks UI)
+  syncToSheets(entry);
+
+  document.getElementById('reps').value='';
+  render();
+}
+
+// -----------------------------
+// Google Sheets Sync (non-blocking)
+// -----------------------------
+const LS_QUEUE = 'pushups_sync_queue';
+
+function getQueue(){
+  return JSON.parse(localStorage.getItem(LS_QUEUE) || '[]');
+}
+
+function saveQueue(q){
+  localStorage.setItem(LS_QUEUE, JSON.stringify(q));
+}
+
+function syncToSheets(entry){
+  const url = document.getElementById('apiUrl').value.trim();
+  if (!url) return; // optional feature
+
+  const payload = { ...entry };
+
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(r => { if (!r.ok) throw new Error('Sync failed'); })
+  .catch(() => {
+    // Queue for later retry
+    const q = getQueue();
+    q.push(payload);
+    saveQueue(q);
+  });
+}
+
+function retryQueuedSync(){
+  const url = document.getElementById('apiUrl').value.trim();
+  if (!url) return;
+
+  const q = getQueue();
+  if (!q.length) return;
+
+  const remaining = [];
+
+  Promise.all(q.map(item =>
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item)
+    }).catch(() => remaining.push(item))
+  )).finally(() => saveQueue(remaining));
+}
+
+// -----------------------------
+// Goal + Streak
+// -----------------------------
+function saveGoal(){
+  const n = Number(document.getElementById('dailyGoal').value);
+  if (!n || n <= 0) return alert('Enter a valid daily goal');
+  setGoal(n);
+  render();
+}
+
+function computeByDay(log){
+  const byDay = {};
+  for (const e of log) {
+    const day = String(e.date).slice(0,10);
+    if (!byDay[day]) byDay[day] = { total: 0, entries: [], byType: {} };
+    byDay[day].total += Number(e.reps) || 0;
+    byDay[day].entries.push(e);
+    const t = e.type || 'Standard';
+    byDay[day].byType[t] = (byDay[day].byType[t] || 0) + (Number(e.reps) || 0);
+  }
+  return byDay;
+}
+
+function computeStreak(byDay, goal){
+  const today = isoDate();
+  const thresh = goal > 0 ? goal : 1;
+  let streak = 0;
+  let cur = new Date(today + 'T00:00:00');
+
+  for(;;){
+    const key = cur.toISOString().slice(0,10);
+    const ok = (byDay[key]?.total || 0) >= thresh;
+    if (!ok) break;
+    streak++;
+    cur.setDate(cur.getDate()-1);
+  }
+  return streak;
+}
+
+function computeConsecutiveWeeks(byWeek){
+  const nowKey = isoWeekKey(new Date());
+  const keys = Object.keys(byWeek);
+  if (keys.length === 0) return 0;
+
+  const toNum = (k) => {
+    const [y, w] = k.split('-W');
+    return Number(y)*100 + Number(w);
+  };
+
+  const set = new Set(keys.map(toNum));
+  let cur = toNum(nowKey);
+  let count = 0;
+
+  function prevWeek(n){
+    let y = Math.floor(n/100);
+    let w = n % 100;
+    w -= 1;
+    if (w >= 1) return y*100 + w;
+    const last = isoWeekKey(new Date(`${y-1}-12-28T00:00:00`));
+    return toNum(last);
+  }
+
+  while (set.has(cur)) {
+    count++;
+    cur = prevWeek(cur);
+  }
+
+  return count;
+}
+
+// -----------------------------
+// Panels
+// -----------------------------
+let calCursor = new Date();
+let calSelected = isoDate();
+let activePanel = 'calendar';
+
+const DOW = ['S','M','T','W','T','F','S'];
+
+function showPanel(which){
+  activePanel = which;
+  document.getElementById('panelCalendar').classList.toggle('hidden', which !== 'calendar');
+  document.getElementById('panelWeekly').classList.toggle('hidden', which !== 'weekly');
+  document.getElementById('panelMonthly').classList.toggle('hidden', which !== 'monthly');
+  document.getElementById('panelBreakdown').classList.toggle('hidden', which !== 'breakdown');
+  render();
+}
+
+function navMonth(delta){
+  calCursor = new Date(calCursor.getFullYear(), calCursor.getMonth()+delta, 1);
+  render();
+}
+
+function goToday(){
+  const t = new Date();
+  calCursor = new Date(t.getFullYear(), t.getMonth(), 1);
+  calSelected = isoDate(t);
+  render();
+}
+
+function setSelected(day){
+  calSelected = day;
+  render();
+}
+
+// -----------------------------
+// Calendar
+// -----------------------------
+function renderCalendar(byDay){
+  const dow = document.getElementById('calDow');
+  dow.innerHTML = '';
+  for (const d of DOW) {
+    const el = document.createElement('div');
+    el.className = 'dow';
+    el.textContent = d;
+    dow.appendChild(el);
+  }
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  const year = calCursor.getFullYear();
+  const month = calCursor.getMonth();
+  const first = new Date(year, month, 1);
+  const firstDow = first.getDay();
+  const start = new Date(year, month, 1 - firstDow);
+
+  const monthLabel = first.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+  document.getElementById('calMonthLabel').textContent = monthLabel;
+
+  const todayKey = isoDate();
+
+  for (let i=0; i<42; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate()+i);
+    const key = d.toISOString().slice(0,10);
+    const inMonth = d.getMonth() === month;
+    const total = byDay[key]?.total || 0;
+
+    const cell = document.createElement('div');
+    cell.className = 'dayCell' + (inMonth ? '' : ' dim') + (total > 0 ? ' hit' : '');
+    if (key === todayKey) cell.classList.add('today');
+    if (key === calSelected) cell.classList.add('selected');
+
+    cell.innerHTML = `
+      <div class="num">${d.getDate()}</div>
+      ${total > 0 ? `<div class="sum">${total}</div>` : ''}
+    `;
+    cell.addEventListener('click', () => setSelected(key));
+    grid.appendChild(cell);
+  }
+
+  const selTotal = byDay[calSelected]?.total || 0;
+  const selCount = byDay[calSelected]?.entries?.length || 0;
+  document.getElementById('calSelectedLabel').textContent = `Selected: ${calSelected}`;
+
+  if (selCount === 0) {
+    document.getElementById('dayDetail').textContent = `No sets logged on ${calSelected}.`;
+  } else {
+    const byType = byDay[calSelected].byType;
+    const parts = Object.entries(byType)
+      .sort((a,b)=>b[1]-a[1])
+      .map(([t,v])=>`${t}: ${v}`)
+      .join(' • ');
+    document.getElementById('dayDetail').textContent = `${selTotal} reps across ${selCount} set(s). ${parts}`;
+  }
+}
+
+// -----------------------------
+// Weekly + Monthly Reports
+// -----------------------------
+function weekRangeLabel(weekStart){
+  const end = new Date(weekStart);
+  end.setDate(end.getDate()+6);
+  const a = weekStart.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+  const b = end.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+  return `${a}–${b}`;
+}
+
+function renderWeeklyReport(byDay, log, byWeek){
+  const now = new Date();
+  const thisWeekStart = startOfISOWeek(now);
+  const lastWeekStart = new Date(thisWeekStart);
+  lastWeekStart.setDate(lastWeekStart.getDate()-7);
+
+  const thisWeekKey = isoWeekKey(now);
+  document.getElementById('weekKeyLabel').textContent = `${thisWeekKey} (${weekRangeLabel(thisWeekStart)})`;
+
+  function weekTotal(weekStart){
+    let sum = 0;
+    for (let i=0;i<7;i++){
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate()+i);
+      const key = d.toISOString().slice(0,10);
+      sum += (byDay[key]?.total || 0);
+    }
+    return sum;
+  }
+
+  const thisTotal = weekTotal(thisWeekStart);
+  const lastTotal = weekTotal(lastWeekStart);
+
+  document.getElementById('thisWeekTotal').textContent = thisTotal;
+  document.getElementById('lastWeekTotal').textContent = lastTotal;
+
+  const pct = lastTotal === 0 ? (thisTotal === 0 ? 0 : 100) : ((thisTotal - lastTotal) / lastTotal) * 100;
+  document.getElementById('vsLastWeek').textContent = `vs last week: ${fmtPct(pct)}`;
+  setTrend('thisWeekTrend', pct);
+
+  const goal = getGoal();
+  const thresh = goal > 0 ? goal : 1;
+  let activeDays = 0;
+  let bestDayName = '—';
+  let bestDayVal = -1;
+
+  for (let i=0;i<7;i++){
+    const d = new Date(thisWeekStart);
+    d.setDate(thisWeekStart.getDate()+i);
+    const key = d.toISOString().slice(0,10);
+    const val = (byDay[key]?.total || 0);
+    if (val >= thresh) activeDays++;
+    if (val > bestDayVal) {
+      bestDayVal = val;
+      bestDayName = d.toLocaleDateString(undefined, { weekday:'short' });
+    }
+  }
+
+  document.getElementById('consistency').textContent = `${activeDays}/7`;
+  document.getElementById('bestDayLine').textContent = bestDayVal > 0 ? `Best day: ${bestDayName} (${bestDayVal})` : 'Best day: —';
+
+  const typeTotals = {};
+  for (const e of log) {
+    const d = new Date(e.date);
+    const ws = startOfISOWeek(d);
+    if (ws.getTime() !== thisWeekStart.getTime()) continue;
+    const t = e.type || 'Standard';
+    typeTotals[t] = (typeTotals[t] || 0) + (Number(e.reps) || 0);
+  }
+  const top = Object.entries(typeTotals).sort((a,b)=>b[1]-a[1])[0];
+  if (top) {
+    const total = Object.values(typeTotals).reduce((a,b)=>a+b,0) || 0;
+    const pctType = total ? Math.round((top[1]/total)*100) : 0;
+    document.getElementById('mostCommonType').textContent = top[0];
+    document.getElementById('mostCommonTypeLine').textContent = `${top[1]} reps • ${pctType}% of this week`;
+  } else {
+    document.getElementById('mostCommonType').textContent = '—';
+    document.getElementById('mostCommonTypeLine').textContent = '—';
+  }
+}
+
+function renderMonthlyReport(byDay, byMonth, byWeek){
+  const now = new Date();
+  const thisMonthKey = isoMonthKey(now);
+  const lastMonth = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const lastMonthKey = isoMonthKey(lastMonth);
+
+  const thisTotal = byMonth[thisMonthKey] || 0;
+  const lastTotal = byMonth[lastMonthKey] || 0;
+
+  document.getElementById('monthKeyLabel').textContent = thisMonthKey;
+  document.getElementById('thisMonthTotal').textContent = thisTotal;
+  document.getElementById('lastMonthTotal').textContent = lastTotal;
+
+  const pct = lastTotal === 0 ? (thisTotal === 0 ? 0 : 100) : ((thisTotal - lastTotal) / lastTotal) * 100;
+  document.getElementById('vsLastMonth').textContent = `vs last month: ${fmtPct(pct)}`;
+  setTrend('thisMonthTrend', pct);
+
+  const activeDays = Object.keys(byDay).filter(d => d.startsWith(thisMonthKey)).length;
+  document.getElementById('monthActiveDays').textContent = activeDays;
+  document.getElementById('monthAvgLine').textContent = `Avg per active day: ${activeDays ? (thisTotal/activeDays).toFixed(1) : 0}`;
+
+  const weeksTrained = Object.keys(byWeek).length;
+  document.getElementById('weeksTrained').textContent = weeksTrained;
+  const consecutiveWeeks = computeConsecutiveWeeks(byWeek);
+  document.getElementById('weeksTrainedLine').textContent = `Consecutive weeks: ${consecutiveWeeks}`;
+}
+
+// -----------------------------
+// Weekly Breakdown
+// -----------------------------
+let breakdownSelectedWeek = null;
+let breakdownFilter = 'all';
+
+function renderBreakdown(byDay, byWeek, log){
+  const chips = document.getElementById('breakdownChips');
+  chips.innerHTML = '';
+  const options = [
+    { key:'all', label:'All' },
+    { key:'last8', label:'Last 8' },
+    { key:'last16', label:'Last 16' },
+  ];
+  for (const o of options) {
+    const c = document.createElement('div');
+    c.className = 'chip' + (breakdownFilter === o.key ? ' active' : '');
+    c.textContent = o.label;
+    c.addEventListener('click', () => { breakdownFilter = o.key; render(); });
+    chips.appendChild(c);
+  }
+
+  const weekList = document.getElementById('weekList');
+  weekList.innerHTML = '';
+
+  const keysSorted = Object.keys(byWeek).sort();
+  let filtered = keysSorted;
+  if (breakdownFilter === 'last8') filtered = keysSorted.slice(-8);
+  if (breakdownFilter === 'last16') filtered = keysSorted.slice(-16);
+
+  if (!breakdownSelectedWeek && filtered.length) breakdownSelectedWeek = filtered[filtered.length-1];
+  if (breakdownSelectedWeek && !filtered.includes(breakdownSelectedWeek) && filtered.length) breakdownSelectedWeek = filtered[filtered.length-1];
+
+  filtered.slice().reverse().forEach((wk) => {
+    const total = byWeek[wk] || 0;
+    const item = document.createElement('div');
+    item.className = 'listItem';
+
+    const [yy, ww] = wk.split('-W');
+    const approx = new Date(`${yy}-01-04T00:00:00`);
+    const day = approx.getDay() || 7;
+    approx.setDate(approx.getDate() + (1 - day));
+    const ws = new Date(approx);
+    ws.setDate(ws.getDate() + (Number(ww)-1)*7);
+
+    item.innerHTML = `
+      <div>
+        <div class="title">${wk}</div>
+        <div class="sub">${weekRangeLabel(ws)}</div>
+      </div>
+      <div class="right">
+        <div class="big">${total}</div>
+        <div class="small">reps</div>
+      </div>
+    `;
+
+    item.addEventListener('click', () => { breakdownSelectedWeek = wk; render(); });
+
+    if (wk === breakdownSelectedWeek) item.style.outline = '2px solid rgba(34,197,94,0.9)';
+
+    weekList.appendChild(item);
+  });
+
+  renderWeekDetails(byDay, log, breakdownSelectedWeek);
+}
+
+function renderWeekDetails(byDay, log, weekKey){
+  const label = document.getElementById('weekDetailLabel');
+  const stats = document.getElementById('weekDetailStats');
+  const daysList = document.getElementById('weekDetailDays');
+  daysList.innerHTML = '';
+
+  if (!weekKey) {
+    label.textContent = '—';
+    stats.textContent = 'Select a week above.';
+    return;
+  }
+
+  label.textContent = weekKey;
+
+  const days = Object.keys(byDay).filter(d => isoWeekKey(d) === weekKey).sort();
+  let total = 0;
+  let sets = 0;
+  const typeTotals = {};
+
+  for (const day of days) {
+    total += byDay[day].total;
+    sets += byDay[day].entries.length;
+    for (const e of byDay[day].entries) {
+      const t = e.type || 'Standard';
+      typeTotals[t] = (typeTotals[t] || 0) + (Number(e.reps)||0);
+    }
+  }
+
+  const topType = Object.entries(typeTotals).sort((a,b)=>b[1]-a[1])[0];
+  stats.textContent = `${total} reps • ${days.length} active day(s) • ${sets} set(s)` + (topType ? ` • top: ${topType[0]} (${topType[1]})` : '');
+
+  for (const day of days) {
+    const dayTotal = byDay[day].total;
+    const entries = byDay[day].entries.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+    const item = document.createElement('div');
+    item.className = 'listItem';
+    item.style.cursor = 'default';
+
+    const d = new Date(day + 'T00:00:00');
+    const dayName = d.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+
+    const lines = entries.map(e => {
+      const t = e.type || 'Standard';
+      const time = new Date(e.date).toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
+      return `${time} • ${Number(e.reps)||0} (${t})`;
+    }).join('\n');
+
+    item.innerHTML = `
+      <div style="min-width:0;">
+        <div class="title">${dayName}</div>
+        <div class="sub" style="white-space:pre-wrap; margin-top:6px;">${lines || '—'}</div>
+      </div>
+      <div class="right">
+        <div class="big">${dayTotal}</div>
+        <div class="small">reps</div>
+      </div>
+    `;
+
+    daysList.appendChild(item);
+  }
+
+  if (days.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'muted';
+    empty.textContent = 'No activity in this week.';
+    daysList.appendChild(empty);
+  }
+}
+
+// -----------------------------
+// Charts
+// -----------------------------
+function drawTrend(labels, values, canvasId){
+  const c = document.getElementById(canvasId);
+  if (!c) return;
+  const ctx = c.getContext('2d');
+
+  const w = c.width, h = c.height;
+  ctx.clearRect(0,0,w,h);
+
+  const padL = 40, padR = 12, padT = 12, padB = 26;
+  const iw = w - padL - padR;
+  const ih = h - padT - padB;
+
+  const maxV = Math.max(1, ...values);
+
+  ctx.globalAlpha = 0.9;
+  ctx.strokeStyle = 'rgba(148,163,184,0.18)';
+  ctx.lineWidth = 1;
+  for (let i=0;i<=4;i++){
+    const y = padT + (ih * i/4);
+    ctx.beginPath();
+    ctx.moveTo(padL, y);
+    ctx.lineTo(padL+iw, y);
+    ctx.stroke();
+
+    const label = Math.round(maxV * (1 - i/4));
+    ctx.fillStyle = 'rgba(148,163,184,0.8)';
+    ctx.font = '12px system-ui';
+    ctx.fillText(String(label), 6, y+4);
+  }
+
+  if (values.length < 2) return;
+
+  ctx.strokeStyle = '#22c55e';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  values.forEach((v, idx) => {
+    const x = padL + (iw * idx/(values.length-1));
+    const y = padT + ih - (ih * (v/maxV));
+    if (idx===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  values.forEach((v, idx) => {
+    const x = padL + (iw * idx/(values.length-1));
+    const y = padT + ih - (ih * (v/maxV));
+    ctx.fillStyle = '#22c55e';
+    ctx.beginPath();
+    ctx.arc(x,y,4,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(148,163,184,0.9)';
+    ctx.font = '12px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(labels[idx], x, h-8);
+  });
+  ctx.textAlign = 'start';
+}
+
+function drawPie(typeTotals){
+  const c = document.getElementById('pieCanvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const w = c.width, h = c.height;
+  ctx.clearRect(0,0,w,h);
+
+  const entries = Object.entries(typeTotals).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const total = entries.reduce((a,[,v])=>a+v,0);
+
+  if (!total) {
+    ctx.fillStyle = 'rgba(148,163,184,0.9)';
+    ctx.font = '14px system-ui';
+    ctx.fillText('No data yet.', 10, 24);
+    document.getElementById('typeLegend').textContent = '';
+    return;
+  }
+
+  const cx = 110, cy = h/2, r = 70;
+  let ang = -Math.PI/2;
+
+  const palette = ['#22c55e','#2563eb','#f59e0b','#a78bfa','#38bdf8','#fb7185','#f97316'];
+
+  entries.forEach(([t,v], i) => {
+    const slice = (v/total) * Math.PI*2;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,ang,ang+slice);
+    ctx.closePath();
+    ctx.fillStyle = palette[i % palette.length];
+    ctx.fill();
+    ang += slice;
+  });
+
+  ctx.beginPath();
+  ctx.arc(cx,cy,40,0,Math.PI*2);
+  ctx.fillStyle = 'rgba(2,6,23,0.95)';
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(229,231,235,0.95)';
+  ctx.font = '12px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('Types', cx, cy+4);
+  ctx.textAlign = 'start';
+
+  const legend = entries
+    .slice(0,6)
+    .map(([t,v])=>{
+      const pct = Math.round((v/total)*100);
+      return `${t}: ${pct}% (${v})`;
+    })
+    .join(' • ');
+  document.getElementById('typeLegend').textContent = legend;
+}
+
+// -----------------------------
+// Achievements
+// -----------------------------
+function computeAchievements(byDay, log, goal, byWeek, byMonth){
+  const out = [];
+  const totalReps = log.reduce((a,e)=>a+(Number(e.reps)||0),0);
+  const days = Object.keys(byDay).length;
+
+  if (log.length >= 1) out.push('✅ First set logged');
+  if (days >= 1) out.push('✅ First active day');
+  if (totalReps >= 100) out.push('🏅 100 total reps');
+  if (totalReps >= 500) out.push('🏅 500 total reps');
+  if (totalReps >= 1000) out.push('🏆 1,000 total reps');
+
+  const streak = computeStreak(byDay, goal);
+  if (streak >= 3) out.push(`🔥 ${streak}-day streak`);
+
+  const weeksTrained = Object.keys(byWeek).length;
+  if (weeksTrained >= 4) out.push('📅 4 weeks trained');
+  if (weeksTrained >= 12) out.push('📅 12 weeks trained');
+
+  const monthsTrained = Object.keys(byMonth).length;
+  if (monthsTrained >= 3) out.push('🗓️ 3 active months');
+
+  if (goal > 0) {
+    const hit = Object.values(byDay).filter(d=>d.total >= goal).length;
+    if (hit >= 7) out.push('🎯 Hit your daily goal 7 times');
+  }
+
+  return out;
+}
+
+// -----------------------------
+// Trend helpers
+// -----------------------------
+function sumRangeByDay(byDay, startDate, days){
+  let total = 0;
+  for (let i=0;i<days;i++){
+    const d = new Date(startDate);
+    d.setDate(d.getDate()+i);
+    const key = isoDate(d);
+    total += (byDay[key]?.total || 0);
+  }
+  return total;
+}
+
+function pctChange(current, previous){
+  if (previous === 0) return current === 0 ? 0 : 100;
+  return ((current - previous) / previous) * 100;
+}
+
+// -----------------------------
+// CSV
+// -----------------------------
+function downloadCSV(){
+  const d = getLog();
+  let csv = 'date,reps,type\n';
+  d.forEach(e=>{
+    const date = String(e.date).replaceAll('"','""');
+    const type = String(e.type || 'Standard').replaceAll('"','""');
+    csv += `"${date}",${Number(e.reps)||0},"${type}"\n`;
+  });
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pushups.csv';
+  a.click();
+}
+
+// -----------------------------
+// Main render
+// -----------------------------
+function render(){
+  const log = getLog();
+  document.getElementById('historyCount').textContent = `${log.length} entries`;
+
+  const goal = getGoal();
+  document.getElementById('dailyGoal').value = goal || '';
+
+  const byDay = computeByDay(log);
+  const activeDays = Object.keys(byDay).length;
+
+  const byWeek = {};
+  for (const [day, obj] of Object.entries(byDay)) {
+    const wk = isoWeekKey(day);
+    byWeek[wk] = (byWeek[wk] || 0) + obj.total;
+  }
+
+  const byMonth = {};
+  for (const [day, obj] of Object.entries(byDay)) {
+    const dt = new Date(day + 'T00:00:00');
+    const mk = isoMonthKey(dt);
+    byMonth[mk] = (byMonth[mk] || 0) + obj.total;
+  }
+
+  const totalReps = log.reduce((a,b)=>a+(Number(b.reps)||0),0);
+  document.getElementById('totalReps').textContent = totalReps;
+  document.getElementById('totalWorkouts').textContent = activeDays;
+
+  const avgPerSession = activeDays ? (totalReps/activeDays) : 0;
+  document.getElementById('avgPerSession').textContent = avgPerSession.toFixed(1);
+
+  const dailyVals = Object.values(byDay).map(d=>d.total);
+  const dailyAvg = dailyVals.length ? (dailyVals.reduce((a,b)=>a+b,0)/dailyVals.length) : 0;
+  document.getElementById('dailyAvg').textContent = dailyAvg.toFixed(1);
+
+  const weeklyTotals = Object.values(byWeek);
+  const weeklyAvg = weeklyTotals.length ? (weeklyTotals.reduce((a,b)=>a+b,0) / weeklyTotals.length) : 0;
+  document.getElementById('weeklyAvg').textContent = weeklyAvg.toFixed(1);
+
+  const bestDay = Object.entries(byDay).sort((a,b)=>b[1].total-a[1].total)[0];
+  document.getElementById('bestSession').textContent = bestDay ? `${bestDay[1].total} reps (${bestDay[0]})` : '—';
+  document.getElementById('bestSessionLine').textContent = bestDay ? 'Best day total' : 'Log a set to start';
+
+  const todayKey = isoDate();
+  const todayTotal = byDay[todayKey]?.total || 0;
+  const denom = goal > 0 ? goal : Math.max(1, todayTotal);
+  const pct = Math.max(0, Math.min(100, (todayTotal/denom)*100));
+  document.getElementById('progressFill').style.width = `${pct}%`;
+  document.getElementById('progressText').textContent = goal > 0
+    ? `${todayTotal} / ${goal} • ${todayTotal >= goal ? 'Goal met!' : 'Keep going'}`
+    : `${todayTotal} reps today`;
+
+  const streak = computeStreak(byDay, goal);
+  document.getElementById('streakText').textContent = `Streak: ${streak} day${streak===1?'':'s'}`;
+
+  const today = new Date();
+  const startCur = new Date(today); startCur.setDate(startCur.getDate()-6); startCur.setHours(0,0,0,0);
+  const startPrev = new Date(startCur); startPrev.setDate(startPrev.getDate()-7);
+
+  const cur7 = sumRangeByDay(byDay, startCur, 7);
+  const prev7 = sumRangeByDay(byDay, startPrev, 7);
+  setTrend('totalRepsTrend', pctChange(cur7, prev7));
+  document.getElementById('totalRepsTrendLine').textContent = `Last 7d: ${cur7} • Prev 7d: ${prev7}`;
+
+  function avgActiveInRange(start, days){
+    let sum=0, act=0;
+    for (let i=0;i<days;i++){
+      const d = new Date(start); d.setDate(start.getDate()+i);
+      const key = isoDate(d);
+      const v = (byDay[key]?.total || 0);
+      if (v > 0) act++;
+      sum += v;
+    }
+    return act ? (sum/act) : 0;
+  }
+  const curAvg = avgActiveInRange(startCur, 7);
+  const prevAvg = avgActiveInRange(startPrev, 7);
+  setTrend('avgTrend', pctChange(curAvg, prevAvg));
+  setTrend('dailyAvgTrend', pctChange(curAvg, prevAvg));
+
+  const wsThis = startOfISOWeek(today);
+  const wsLast = new Date(wsThis); wsLast.setDate(wsLast.getDate()-7);
+  const thisWeekTotal = sumRangeByDay(byDay, wsThis, 7);
+  const lastWeekTotal = sumRangeByDay(byDay, wsLast, 7);
+  setTrend('weeklyAvgTrend', pctChange(thisWeekTotal, lastWeekTotal));
+
+  renderCalendar(byDay);
+  renderWeeklyReport(byDay, log, byWeek);
+  renderMonthlyReport(byDay, byMonth, byWeek);
+  renderBreakdown(byDay, byWeek, log);
+
+  const bestSet = log.reduce((m,e)=>Math.max(m, Number(e.reps)||0), 0);
+  const bestDayVal = bestDay ? bestDay[1].total : 0;
+  const bestWeekVal = weeklyTotals.length ? Math.max(...weeklyTotals) : 0;
+  const monthTotals = Object.values(byMonth);
+  const bestMonthVal = monthTotals.length ? Math.max(...monthTotals) : 0;
+
+  document.getElementById('prBestSet').textContent = bestSet;
+  document.getElementById('prBestDay').textContent = bestDayVal;
+  document.getElementById('prBestWeek').textContent = bestWeekVal;
+  document.getElementById('prBestMonth').textContent = bestMonthVal;
+  document.getElementById('prNote').textContent = bestDay ? `Best day was ${bestDay[0]} with ${bestDayVal} reps.` : '';
+
+  const ach = computeAchievements(byDay, log, goal, byWeek, byMonth);
+  document.getElementById('achievements').innerHTML = ach.length
+    ? '<ul style="margin:0; padding-left: 18px;">' + ach.map(a=>`<li style="margin:6px 0;">${a}</li>`).join('') + '</ul>'
+    : 'No achievements yet.';
+
+  const weekKeysSorted = Object.keys(byWeek).sort().slice(-8);
+  const trendVals = weekKeysSorted.map(k => byWeek[k] || 0);
+  drawTrend(weekKeysSorted, trendVals, 'trendCanvas');
+
+  const monthKeysSorted = Object.keys(byMonth).sort().slice(-12);
+  const monthVals = monthKeysSorted.map(k => byMonth[k] || 0);
+  const monthLabels = monthKeysSorted.map(k => {
+    const [y,m]=k.split('-');
+    return `${m}/${String(y).slice(2)}`;
+  });
+  drawTrend(monthLabels, monthVals, 'monthCanvas');
+
+  const typeTotals = {};
+  for (const e of log) {
+    const t = e.type || 'Standard';
+    typeTotals[t] = (typeTotals[t] || 0) + (Number(e.reps)||0);
+  }
+  drawPie(typeTotals);
+
+  const hist = document.getElementById('history');
+  hist.innerHTML = '';
+  log.slice().reverse().forEach(e=>{
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    div.innerHTML = `
+      <div class="left">
+        <div class="reps">${Number(e.reps)||0} Reps</div>
+        <div class="date">${new Date(e.date).toLocaleString()}</div>
+      </div>
+      <div class="tag">${e.type || 'Standard'}</div>
+    `;
+    hist.appendChild(div);
+  });
+}
+
+// -----------------------------
+// Minimal tests (run once on load)
+// -----------------------------
+function runTests(){
+  const results = [];
+  function ok(name, fn){
+    try {
+      fn();
+      results.push({ name, pass: true });
+    } catch (e) {
+      console.error(`Test failed: ${name}`, e);
+      results.push({ name, pass: false, error: String(e && e.message ? e.message : e) });
+    }
+  }
+
+  ok('logSet is defined globally', () => {
+    if (typeof window.logSet !== 'function') throw new Error('window.logSet is not a function');
+  });
+
+  ok('saveLog does not throw when localStorage is available', () => {
+    // Only assert no-throw in environments that allow localStorage.
+    if (!storageAvailable()) return;
+    const before = getLog();
+    saveLog(before);
+  });
+
+  ok('computeByDay aggregates correctly', () => {
+    const fake = [
+      { reps: 10, type: 'Standard', date: '2025-12-10T10:00:00.000Z' },
+      { reps: 15, type: 'Wide', date: '2025-12-10T11:00:00.000Z' },
+      { reps: 5, type: 'Standard', date: '2025-12-11T10:00:00.000Z' },
+    ];
+    const byDay = computeByDay(fake);
+    if (byDay['2025-12-10'].total !== 25) throw new Error('Expected 25 reps on 2025-12-10');
+    if (byDay['2025-12-11'].total !== 5) throw new Error('Expected 5 reps on 2025-12-11');
+  });
+
+  const failed = results.filter(r => !r.pass);
+  if (failed.length) {
+    console.warn('Some tests failed:', failed);
+  }
+}
+
+// Init
+(function init(){
+  const t = new Date();
+  calCursor = new Date(t.getFullYear(), t.getMonth(), 1);
+  calSelected = isoDate(t);
+  runTests();
+  render();
+})();
+</script>
+</body>
+</html>
