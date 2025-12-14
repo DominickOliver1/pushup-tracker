@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Push-Up Tracker</title>
+  <title>Push-Up Tracker (Advanced + Google Sheets)</title>
   <style>
     :root {
       --bg0: #020617;
@@ -95,6 +95,13 @@
       border: 1px solid var(--border);
       color: var(--text);
       font-weight: 800;
+    }
+
+    button.danger {
+      background: linear-gradient(180deg, rgba(239,68,68,0.24), rgba(239,68,68,0.10));
+      border: 1px solid rgba(239,68,68,0.35);
+      color: var(--text);
+      font-weight: 900;
     }
 
     .btnRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
@@ -333,17 +340,65 @@
       user-select:none;
     }
     .chip.active { outline: 2px solid rgba(34,197,94,0.9); }
+
+    .statusPill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(148,163,184,0.10);
+      font-size:12px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .dot{ width:8px; height:8px; border-radius:999px; background:rgba(148,163,184,.8); }
+    .dot.ok{ background:rgba(34,197,94,.9); }
+    .dot.warn{ background:rgba(245,158,11,.95); }
+    .dot.bad{ background:rgba(239,68,68,.95); }
+
+    details summary { cursor:pointer; color:#e2e8f0; font-weight:900; }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: rgba(2,6,23,0.7);
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 14px;
+      color: #d1d5db;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
 <div class="wrap">
 
+  <div class="card" id="hostWarning" style="display:none;border-color:rgba(245,158,11,.35);">
+    <div class="sectionTitleRow">
+      <h2 style="margin:0;">Sync is disabled</h2>
+      <span class="statusPill"><span class="dot warn"></span>file:// mode</span>
+    </div>
+    <div class="miniNote" style="color:#fde68a;">
+      You opened this app as a local file (<b>file://</b>). Browsers typically block Google Sheets syncing from local files.
+      Host it on <b>GitHub Pages</b> (recommended) or run a local server (<b>http://localhost</b>).
+    </div>
+  </div>
+
   <!-- Log Set -->
   <div class="card">
-    <h1>Push-Up Tracker</h1>
+    <div class="sectionTitleRow">
+      <h1 style="margin:0;">Push-Up Tracker</h1>
+      <div class="statusPill" id="syncPill">
+        <span class="dot" id="syncDot"></span>
+        <span id="syncText">Not connected</span>
+      </div>
+    </div>
 
-    <div class="label">Google Apps Script URL (optional)</div>
-    <input id="apiUrl" placeholder="Paste Google Apps Script URL (optional)" />
+    <div class="label">Google Apps Script URL</div>
+    <input id="apiUrl" placeholder="Paste Google Apps Script /exec URL" />
+    <div class="miniNote">Saved on this device so you only paste it once.</div>
+
     <div class="btnRow">
       <button class="secondary" onclick="importFromSheets()">Restore from Google Sheets</button>
       <button class="secondary" onclick="retryQueuedSync()">Retry Pending Sync</button>
@@ -367,6 +422,89 @@
     </div>
 
     <button onclick="logSet()">Log Set</button>
+
+    <details style="margin-top:12px;">
+      <summary>Google Apps Script code (auto-creates Sets + Daily tabs)</summary>
+      <div class="miniNote">
+        Your Google Sheet can be empty — this script auto-creates tabs:
+        <ul style="margin:8px 0 0 18px;">
+          <li><b>Sets</b>: date, reps, type</li>
+          <li><b>Daily</b>: day, totalReps, sets, typesJson</li>
+        </ul>
+        Deploy as a Web App: Execute as <b>Me</b>, Access <b>Anyone</b>.
+      </div>
+      <pre>
+// Apps Script (paste into Extensions → Apps Script)
+function ensureSheet_(name, headers) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(name);
+  if (!sh) sh = ss.insertSheet(name);
+  if (sh.getLastRow() === 0) sh.appendRow(headers);
+  return sh;
+}
+
+function doPost(e) {
+  try {
+    const body = JSON.parse((e && e.postData && e.postData.contents) ? e.postData.contents : "{}");
+    const action = body.action || "set";
+
+    const setsSh = ensureSheet_("Sets", ["date","reps","type"]);
+    const dailySh = ensureSheet_("Daily", ["day","totalReps","sets","typesJson"]);
+
+    if (action === "set") {
+      setsSh.appendRow([body.date, Number(body.reps) || 0, body.type || "Standard"]);
+    }
+
+    if (action === "daily") {
+      const day = body.day; // YYYY-MM-DD
+      const totalReps = Number(body.totalReps) || 0;
+      const sets = Number(body.sets) || 0;
+      const typesJson = JSON.stringify(body.types || {});
+
+      // upsert by day
+      const values = dailySh.getDataRange().getValues();
+      let rowIndex = -1;
+      for (let i = 1; i &lt; values.length; i++) {
+        if (String(values[i][0]) === String(day)) { rowIndex = i + 1; break; }
+      }
+      if (rowIndex === -1) {
+        dailySh.appendRow([day, totalReps, sets, typesJson]);
+      } else {
+        dailySh.getRange(rowIndex, 2, 1, 3).setValues([[totalReps, sets, typesJson]]);
+      }
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({status:"ok"}))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({error:String(err)}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet() {
+  const setsSh = ensureSheet_("Sets", ["date","reps","type"]);
+  const values = setsSh.getDataRange().getValues();
+  if (values.length &lt; 2) {
+    return ContentService
+      .createTextOutput(JSON.stringify([]))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  values.shift(); // remove headers
+  const rows = values.map(r =&gt; ({
+    date: r[0],
+    reps: Number(r[1]) || 0,
+    type: r[2] || "Standard"
+  }));
+  return ContentService
+    .createTextOutput(JSON.stringify(rows))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+      </pre>
+    </details>
   </div>
 
   <!-- Goal + Progress -->
@@ -498,7 +636,6 @@
     </div>
 
     <div class="chipRow" id="breakdownChips"></div>
-
     <div class="list" id="weekList"></div>
 
     <div class="card" style="margin-top:12px;">
@@ -511,7 +648,7 @@
     </div>
   </div>
 
-  <!-- Reports & Stats (core) -->
+  <!-- Reports & Stats -->
   <div class="card">
     <h2>Reports & Stats</h2>
     <div class="stats-grid">
@@ -522,7 +659,11 @@
       <div class="stat"><div class="k">DAILY AVG REPS</div><div class="v"><span id="dailyAvg">0</span><span class="trend flat" id="dailyAvgTrend">—</span></div><div class="s">Across active days</div></div>
       <div class="stat"><div class="k">WEEKLY AVG REPS</div><div class="v"><span id="weeklyAvg">0</span><span class="trend flat" id="weeklyAvgTrend">—</span></div><div class="s">Average weekly totals</div></div>
     </div>
-    <button onclick="downloadCSV()">⬇️ Download Log as CSV</button>
+    <div class="btnRow">
+      <button onclick="downloadCSV()">⬇️ Download Log as CSV</button>
+      <button class="danger" onclick="resetLocalData()">Reset Local Data</button>
+    </div>
+    <div class="miniNote">Reset only clears this device. Your Google Sheet (cloud) stays intact.</div>
   </div>
 
   <!-- Personal Records -->
@@ -589,11 +730,13 @@
 </div>
 
 <script>
-// -----------------------------
-// Storage
-// -----------------------------
+/* =============================
+   Storage
+============================= */
 const LS_LOG = 'pushups_log';
 const LS_GOAL = 'pushups_daily_goal';
+const LS_QUEUE = 'pushups_sync_queue';
+const LS_API = 'pushups_api_url';
 
 function storageAvailable() {
   try {
@@ -618,8 +761,6 @@ function getLog(){
   }
 }
 
-// IMPORTANT: This used to contain a literal newline inside a quoted string, which breaks the entire script.
-// That parse error is what caused "logSet is not defined" (because the browser never finished parsing).
 function saveLog(d){
   if (!storageAvailable()) {
     window.__MEM_LOG = d;
@@ -635,9 +776,31 @@ function saveLog(d){
 function getGoal(){ return Number(localStorage.getItem(LS_GOAL) || '0') || 0; }
 function setGoal(n){ localStorage.setItem(LS_GOAL, String(Number(n)||0)); }
 
-// -----------------------------
-// Helpers
-// -----------------------------
+function getQueue(){ return JSON.parse(localStorage.getItem(LS_QUEUE) || '[]'); }
+function saveQueue(q){ localStorage.setItem(LS_QUEUE, JSON.stringify(q)); }
+
+function getApiUrl(){ return (localStorage.getItem(LS_API) || '').trim(); }
+function setApiUrl(v){ localStorage.setItem(LS_API, (v || '').trim()); }
+
+/* =============================
+   Sync status UI
+============================= */
+const syncDot = document.getElementById('syncDot');
+const syncText = document.getElementById('syncText');
+
+function setSyncStatus(kind, text){
+  syncDot.classList.remove('ok','warn','bad');
+  if(kind==='ok') syncDot.classList.add('ok');
+  else if(kind==='warn') syncDot.classList.add('warn');
+  else if(kind==='bad') syncDot.classList.add('bad');
+  syncText.textContent = text;
+}
+
+function isHosted(){ return window.location.protocol !== 'file:'; }
+
+/* =============================
+   Helpers
+============================= */
 function isoDate(d = new Date()) { return d.toISOString().slice(0,10); }
 function isoMonthKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
 
@@ -681,90 +844,97 @@ function setTrend(elId, deltaPct){
   el.textContent = t.text;
 }
 
-// -----------------------------
-// Logging
-// -----------------------------
-// Must be global because HTML uses onclick="logSet()".
-function logSet(){
-  const reps = Number(document.getElementById('reps').value);
-  const type = String(document.getElementById('type').value || 'Standard');
-  if(!reps || reps <= 0) return alert('Enter reps');
-
-  const entry = { reps, type, date: new Date().toISOString() };
-
-  // 1️⃣ Always log locally first (instant, offline-safe)
-  const d = getLog();
-  d.push(entry);
-  saveLog(d);
-
-  // 2️⃣ Fire-and-forget Google Sheets sync (never blocks UI)
-  syncToSheets(entry);
-
-  document.getElementById('reps').value='';
-  render();
+function pctChange(current, previous){
+  if (previous === 0) return current === 0 ? 0 : 100;
+  return ((current - previous) / previous) * 100;
 }
 
-// -----------------------------
-// Google Sheets Sync (non-blocking)
-// -----------------------------
-const LS_QUEUE = 'pushups_sync_queue';
+function sumRangeByDay(byDay, startDate, days){
+  let total = 0;
+  for (let i=0;i<days;i++){
+    const d = new Date(startDate);
+    d.setDate(d.getDate()+i);
+    const key = isoDate(d);
+    total += (byDay[key]?.total || 0);
+  }
+  return total;
+}
 
-function getQueue(){ return JSON.parse(localStorage.getItem(LS_QUEUE) || '[]'); }
-function saveQueue(q){ localStorage.setItem(LS_QUEUE, JSON.stringify(q)); }
-
-function syncToSheets(entry){
-  const url = document.getElementById('apiUrl').value.trim();
-  if (!url) return;
-
-  fetch(url, {
+/* =============================
+   Google Sheets Sync
+   - action=set : append each set to Sets tab
+   - action=daily : upsert daily totals to Daily tab
+============================= */
+function postJson(url, payload){
+  return fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(entry)
-  })
-  .then(r => { if (!r.ok) throw new Error('Sync failed'); })
-  .catch(() => {
-    const q = getQueue();
-    q.push(entry);
-    saveQueue(q);
+    body: JSON.stringify(payload)
+  }).then(r => {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json().catch(() => ({}));
   });
 }
 
+function queuePayload(payload){
+  const q = getQueue();
+  q.push(payload);
+  saveQueue(q);
+  setSyncStatus('warn', `Queued (${q.length})`);
+}
+
+function syncToSheets(payload){
+  const url = getApiUrl();
+  if (!url) { setSyncStatus('warn','Add Script URL'); return; }
+
+  if (!isHosted()) {
+    setSyncStatus('warn','file:// blocks sync');
+    queuePayload(payload);
+    return;
+  }
+
+  postJson(url, payload)
+    .then(() => setSyncStatus('ok','Synced'))
+    .catch(() => queuePayload(payload));
+}
+
 function retryQueuedSync(){
-  const url = document.getElementById('apiUrl').value.trim();
-  if (!url) return;
+  const url = getApiUrl();
+  if (!url) { setSyncStatus('warn','Add Script URL'); return; }
+  if (!isHosted()) { setSyncStatus('warn','file:// blocks sync'); return; }
 
   const q = getQueue();
-  if (!q.length) return;
+  if (!q.length) { setSyncStatus('ok','Nothing queued'); return; }
 
+  setSyncStatus('warn', `Retrying (${q.length})`);
   const remaining = [];
-  Promise.all(q.map(item =>
-    fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item)
-    }).catch(() => remaining.push(item))
-  )).finally(() => saveQueue(remaining));
+  Promise.all(q.map(item => postJson(url, item).catch(() => remaining.push(item))))
+    .finally(() => {
+      saveQueue(remaining);
+      setSyncStatus(remaining.length ? 'warn' : 'ok', remaining.length ? `Queued (${remaining.length})` : 'Synced');
+    });
 }
 
-// -----------------------------
-// Google Sheets Import (MERGE + DEDUPE)
-// -----------------------------
-function entryKey(e){
-  return `${e.date}|${e.reps}|${e.type}`;
-}
+/* =============================
+   Import (restore + merge + dedupe)
+============================= */
+function entryKey(e){ return `${e.date}|${e.reps}|${e.type}`; }
 
 async function importFromSheets(){
-  const url = document.getElementById('apiUrl').value.trim();
-  if (!url) return alert('Paste your Google Apps Script URL first');
+  const url = getApiUrl();
+  if (!url) return alert('Paste your Google Apps Script /exec URL first');
+
+  setSyncStatus('warn','Restoring…');
 
   let remote;
   try {
     const res = await fetch(url);
     if (!res.ok) throw new Error('Fetch failed');
     remote = await res.json();
-    if (!Array.isArray(remote)) throw new Error('Invalid sheet data');
+    if (!Array.isArray(remote)) throw new Error('Invalid JSON');
   } catch (e) {
-    alert('Failed to fetch data from Google Sheets');
+    setSyncStatus('bad','Restore failed');
+    alert('Failed to fetch data from Google Sheets. Confirm your /exec URL shows JSON in the browser.');
     return;
   }
 
@@ -778,19 +948,13 @@ async function importFromSheets(){
   saveLog(merged);
   render();
 
+  setSyncStatus('ok','Restored');
   alert(`Restore complete. ${merged.length} total sets after merge.`);
 }
 
-// -----------------------------
-// Goal + Streak
-// -----------------------------
-function saveGoal(){
-  const n = Number(document.getElementById('dailyGoal').value);
-  if (!n || n <= 0) return alert('Enter a valid daily goal');
-  setGoal(n);
-  render();
-}
-
+/* =============================
+   Logging
+============================= */
 function computeByDay(log){
   const byDay = {};
   for (const e of log) {
@@ -802,6 +966,51 @@ function computeByDay(log){
     byDay[day].byType[t] = (byDay[day].byType[t] || 0) + (Number(e.reps) || 0);
   }
   return byDay;
+}
+
+function pushDailySummaryToSheets(byDay, dayKey){
+  const day = byDay[dayKey];
+  if (!day) return;
+  syncToSheets({
+    action: 'daily',
+    day: dayKey,
+    totalReps: day.total,
+    sets: day.entries.length,
+    types: day.byType
+  });
+}
+
+// Must be global because HTML uses onclick="logSet()".
+function logSet(){
+  const reps = Number(document.getElementById('reps').value);
+  const type = String(document.getElementById('type').value || 'Standard');
+  if(!reps || reps <= 0) return alert('Enter reps');
+
+  const entry = { reps, type, date: new Date().toISOString() };
+
+  const d = getLog();
+  d.push(entry);
+  saveLog(d);
+
+  // post set row
+  syncToSheets({ action: 'set', ...entry });
+
+  // post daily upsert
+  const byDay = computeByDay(d);
+  pushDailySummaryToSheets(byDay, entry.date.slice(0,10));
+
+  document.getElementById('reps').value='';
+  render();
+}
+
+/* =============================
+   Goal + Streak
+============================= */
+function saveGoal(){
+  const n = Number(document.getElementById('dailyGoal').value);
+  if (!n || n <= 0) return alert('Enter a valid daily goal');
+  setGoal(n);
+  render();
 }
 
 function computeStreak(byDay, goal){
@@ -847,17 +1056,15 @@ function computeConsecutiveWeeks(byWeek){
     count++;
     cur = prevWeek(cur);
   }
-
   return count;
 }
 
-// -----------------------------
-// Panels
-// -----------------------------
+/* =============================
+   Panels
+============================= */
 let calCursor = new Date();
 let calSelected = isoDate();
 let activePanel = 'calendar';
-
 const DOW = ['S','M','T','W','T','F','S'];
 
 function showPanel(which){
@@ -886,9 +1093,9 @@ function setSelected(day){
   render();
 }
 
-// -----------------------------
-// Calendar
-// -----------------------------
+/* =============================
+   Calendar
+============================= */
 function renderCalendar(byDay){
   const dow = document.getElementById('calDow');
   dow.innerHTML = '';
@@ -949,9 +1156,9 @@ function renderCalendar(byDay){
   }
 }
 
-// -----------------------------
-// Weekly + Monthly Reports
-// -----------------------------
+/* =============================
+   Weekly + Monthly Reports
+============================= */
 function weekRangeLabel(weekStart){
   const end = new Date(weekStart);
   end.setDate(end.getDate()+6);
@@ -1058,13 +1265,13 @@ function renderMonthlyReport(byDay, byMonth, byWeek){
   document.getElementById('weeksTrainedLine').textContent = `Consecutive weeks: ${consecutiveWeeks}`;
 }
 
-// -----------------------------
-// Weekly Breakdown
-// -----------------------------
+/* =============================
+   Weekly Breakdown
+============================= */
 let breakdownSelectedWeek = null;
 let breakdownFilter = 'all';
 
-function renderBreakdown(byDay, byWeek, log){
+function renderBreakdown(byDay, byWeek){
   const chips = document.getElementById('breakdownChips');
   chips.innerHTML = '';
   const options = [
@@ -1121,10 +1328,10 @@ function renderBreakdown(byDay, byWeek, log){
     weekList.appendChild(item);
   });
 
-  renderWeekDetails(byDay, log, breakdownSelectedWeek);
+  renderWeekDetails(byDay, breakdownSelectedWeek);
 }
 
-function renderWeekDetails(byDay, log, weekKey){
+function renderWeekDetails(byDay, weekKey){
   const label = document.getElementById('weekDetailLabel');
   const stats = document.getElementById('weekDetailStats');
   const daysList = document.getElementById('weekDetailDays');
@@ -1194,9 +1401,9 @@ function renderWeekDetails(byDay, log, weekKey){
   }
 }
 
-// -----------------------------
-// Charts
-// -----------------------------
+/* =============================
+   Charts
+============================= */
 function drawTrend(labels, values, canvasId){
   const c = document.getElementById(canvasId);
   if (!c) return;
@@ -1310,9 +1517,9 @@ function drawPie(typeTotals){
   document.getElementById('typeLegend').textContent = legend;
 }
 
-// -----------------------------
-// Achievements
-// -----------------------------
+/* =============================
+   Achievements
+============================= */
 function computeAchievements(byDay, log, goal, byWeek, byMonth){
   const out = [];
   const totalReps = log.reduce((a,e)=>a+(Number(e.reps)||0),0);
@@ -1342,28 +1549,9 @@ function computeAchievements(byDay, log, goal, byWeek, byMonth){
   return out;
 }
 
-// -----------------------------
-// Trend helpers
-// -----------------------------
-function sumRangeByDay(byDay, startDate, days){
-  let total = 0;
-  for (let i=0;i<days;i++){
-    const d = new Date(startDate);
-    d.setDate(d.getDate()+i);
-    const key = isoDate(d);
-    total += (byDay[key]?.total || 0);
-  }
-  return total;
-}
-
-function pctChange(current, previous){
-  if (previous === 0) return current === 0 ? 0 : 100;
-  return ((current - previous) / previous) * 100;
-}
-
-// -----------------------------
-// CSV
-// -----------------------------
+/* =============================
+   CSV + Reset
+============================= */
 function downloadCSV(){
   const d = getLog();
   let csv = 'date,reps,type\n';
@@ -1379,9 +1567,18 @@ function downloadCSV(){
   a.click();
 }
 
-// -----------------------------
-// Main render
-// -----------------------------
+function resetLocalData(){
+  if(!confirm('This will clear this device only. Continue?')) return;
+  localStorage.removeItem(LS_LOG);
+  localStorage.removeItem(LS_GOAL);
+  localStorage.removeItem(LS_QUEUE);
+  render();
+  setSyncStatus('warn','Local reset');
+}
+
+/* =============================
+   Main render
+============================= */
 function render(){
   const log = getLog();
   document.getElementById('historyCount').textContent = `${log.length} entries`;
@@ -1470,7 +1667,7 @@ function render(){
   renderCalendar(byDay);
   renderWeeklyReport(byDay, log, byWeek);
   renderMonthlyReport(byDay, byMonth, byWeek);
-  renderBreakdown(byDay, byWeek, log);
+  renderBreakdown(byDay, byWeek);
 
   const bestSet = log.reduce((m,e)=>Math.max(m, Number(e.reps)||0), 0);
   const bestDayVal = bestDay ? bestDay[1].total : 0;
@@ -1522,57 +1719,37 @@ function render(){
     `;
     hist.appendChild(div);
   });
+
+  // sync pill baseline state
+  const url = getApiUrl();
+  const q = getQueue();
+  if (!url) setSyncStatus('warn','Add Script URL');
+  else if (!isHosted()) setSyncStatus('warn','file:// blocks sync');
+  else if (q.length) setSyncStatus('warn',`Queued (${q.length})`);
+  else setSyncStatus('ok','Ready');
 }
 
-// -----------------------------
-// Minimal tests (run once on load)
-// -----------------------------
-function runTests(){
-  const results = [];
-  function ok(name, fn){
-    try {
-      fn();
-      results.push({ name, pass: true });
-    } catch (e) {
-      console.error(`Test failed: ${name}`, e);
-      results.push({ name, pass: false, error: String(e && e.message ? e.message : e) });
-    }
-  }
-
-  ok('logSet is defined globally', () => {
-    if (typeof window.logSet !== 'function') throw new Error('window.logSet is not a function');
-  });
-
-  ok('saveLog does not throw when localStorage is available', () => {
-    // Only assert no-throw in environments that allow localStorage.
-    if (!storageAvailable()) return;
-    const before = getLog();
-    saveLog(before);
-  });
-
-  ok('computeByDay aggregates correctly', () => {
-    const fake = [
-      { reps: 10, type: 'Standard', date: '2025-12-10T10:00:00.000Z' },
-      { reps: 15, type: 'Wide', date: '2025-12-10T11:00:00.000Z' },
-      { reps: 5, type: 'Standard', date: '2025-12-11T10:00:00.000Z' },
-    ];
-    const byDay = computeByDay(fake);
-    if (byDay['2025-12-10'].total !== 25) throw new Error('Expected 25 reps on 2025-12-10');
-    if (byDay['2025-12-11'].total !== 5) throw new Error('Expected 5 reps on 2025-12-11');
-  });
-
-  const failed = results.filter(r => !r.pass);
-  if (failed.length) {
-    console.warn('Some tests failed:', failed);
-  }
-}
-
-// Init
+/* =============================
+   Init
+============================= */
 (function init(){
+  // host warning
+  if (!isHosted()) {
+    document.getElementById('hostWarning').style.display = 'block';
+  }
+
+  // API URL persistence wiring
+  const apiInput = document.getElementById('apiUrl');
+  apiInput.value = getApiUrl() || '';
+  apiInput.addEventListener('input', (e) => {
+    setApiUrl(e.target.value);
+    render();
+  });
+
   const t = new Date();
   calCursor = new Date(t.getFullYear(), t.getMonth(), 1);
   calSelected = isoDate(t);
-  runTests();
+
   render();
 })();
 </script>
