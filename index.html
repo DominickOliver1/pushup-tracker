@@ -3,25 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Push-Up Tracker (Advanced + Google Sheets)</title>
+  <title>Push-Up Tracker</title>
   <style>
     :root {
       --bg0: #020617;
-      --bg1: #0b1020;
-      --card: #0b1222;
-      --card2: #071126;
       --text: #e5e7eb;
       --muted: #94a3b8;
       --border: rgba(148,163,184,0.14);
       --primary: #2563eb;
       --accent: #22c55e;
       --accent2: #16a34a;
-      --warn: #f59e0b;
       --danger: #ef4444;
+      --warn: #f59e0b;
     }
-
     * { box-sizing: border-box; }
-
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: radial-gradient(circle at top, #111827 0%, #020617 55%, #020617 100%);
@@ -29,12 +24,9 @@
       margin: 0;
       padding: 16px;
     }
-
     .wrap { max-width: 560px; margin: 0 auto; }
-
     h1 { margin: 0 0 10px; font-size: 24px; }
     h2 { margin: 0 0 12px; font-size: 18px; color: #d1d5db; }
-
     .card {
       background: linear-gradient(180deg, rgba(17,24,39,0.92), rgba(2,6,23,0.95));
       border-radius: 18px;
@@ -43,17 +35,14 @@
       border: 1px solid var(--border);
       box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     }
-
     .row { display: flex; gap: 10px; flex-wrap: wrap; }
     .row > * { flex: 1; min-width: 120px; }
-
     .label {
       font-size: 12px;
       color: var(--muted);
       margin: 10px 0 6px;
       letter-spacing: .02em;
     }
-
     input, select {
       width: 100%;
       padding: 14px;
@@ -64,12 +53,10 @@
       font-size: 16px;
       outline: none;
     }
-
     input:focus, select:focus {
       border-color: rgba(34,197,94,0.45);
       box-shadow: 0 0 0 3px rgba(34,197,94,0.14);
     }
-
     button {
       width: 100%;
       margin-top: 12px;
@@ -82,36 +69,30 @@
       font-weight: 800;
       cursor: pointer;
     }
-
     button.secondary {
       background: linear-gradient(180deg, rgba(148,163,184,0.18), rgba(148,163,184,0.08));
       border: 1px solid var(--border);
       color: var(--text);
       font-weight: 800;
     }
-
     button.ghost {
       background: transparent;
       border: 1px solid var(--border);
       color: var(--text);
       font-weight: 800;
     }
-
     button.danger {
       background: linear-gradient(180deg, rgba(239,68,68,0.24), rgba(239,68,68,0.10));
       border: 1px solid rgba(239,68,68,0.35);
       color: var(--text);
       font-weight: 900;
     }
-
     .btnRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
     }
-
     .stat {
       background: linear-gradient(180deg, rgba(15,23,42,0.92), rgba(2,6,23,0.92));
       border-radius: 16px;
@@ -120,13 +101,7 @@
       position: relative;
       overflow: hidden;
     }
-
-    .stat .k {
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: .06em;
-    }
-
+    .stat .k { font-size: 11px; color: var(--muted); letter-spacing: .06em; }
     .stat .v {
       font-size: 28px;
       font-weight: 900;
@@ -137,7 +112,6 @@
       gap: 8px;
       flex-wrap: wrap;
     }
-
     .trend {
       font-size: 12px;
       font-weight: 900;
@@ -147,19 +121,11 @@
       background: rgba(148,163,184,0.10);
       color: #e2e8f0;
     }
-
     .trend.up { background: rgba(34,197,94,0.10); color: #86efac; }
     .trend.down { background: rgba(239,68,68,0.10); color: #fecaca; }
     .trend.flat { background: rgba(148,163,184,0.10); color: #e2e8f0; }
-
-    .stat .s {
-      font-size: 13px;
-      color: #e5e7eb;
-      margin-top: 6px;
-    }
-
+    .stat .s { font-size: 13px; color: #e5e7eb; margin-top: 6px; }
     .progressWrap { margin-top: 10px; }
-
     .progressBar {
       height: 10px;
       width: 100%;
@@ -168,7 +134,6 @@
       border-radius: 999px;
       overflow: hidden;
     }
-
     .progressFill {
       height: 100%;
       width: 0%;
@@ -176,9 +141,7 @@
       border-radius: 999px;
       transition: width 220ms ease;
     }
-
     .muted { color: var(--muted); font-size: 13px; }
-
     .history-item {
       background: linear-gradient(180deg, rgba(15,23,42,0.92), rgba(2,6,23,0.92));
       border-radius: 16px;
@@ -190,22 +153,8 @@
       gap: 12px;
       align-items: center;
     }
-
-    .history-item .left { min-width: 0; }
-
-    .history-item .reps {
-      font-size: 20px;
-      font-weight: 900;
-      color: var(--accent);
-      line-height: 1.1;
-    }
-
-    .history-item .date {
-      font-size: 13px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
+    .history-item .reps { font-size: 20px; font-weight: 900; color: var(--accent); line-height: 1.1; }
+    .history-item .date { font-size: 13px; color: var(--muted); margin-top: 4px; }
     .tag {
       font-size: 12px;
       padding: 8px 10px;
@@ -215,14 +164,12 @@
       color: #e2e8f0;
       white-space: nowrap;
     }
-
     .sectionTitleRow {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 10px;
     }
-
     /* Calendar */
     .calHeader {
       display: flex;
@@ -231,9 +178,7 @@
       gap: 10px;
       margin-top: 4px;
     }
-
     .calHeader .controls { display: flex; gap: 10px; align-items: center; }
-
     .calHeader button {
       width: auto;
       margin-top: 0;
@@ -241,21 +186,18 @@
       border-radius: 999px;
       font-size: 14px;
     }
-
     .calGrid {
       margin-top: 12px;
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 10px;
     }
-
     .dow {
       font-size: 11px;
       color: var(--muted);
       text-align: center;
       letter-spacing: .06em;
     }
-
     .dayCell {
       height: 64px;
       border-radius: 14px;
@@ -266,15 +208,8 @@
       cursor: pointer;
       overflow: hidden;
     }
-
     .dayCell.dim { opacity: 0.45; }
-
-    .dayCell .num {
-      font-weight: 800;
-      font-size: 13px;
-      color: #e5e7eb;
-    }
-
+    .dayCell .num { font-weight: 800; font-size: 13px; color: #e5e7eb; }
     .dayCell .sum {
       position: absolute;
       right: 10px;
@@ -283,7 +218,6 @@
       font-size: 14px;
       color: var(--accent);
     }
-
     .dayCell.hit::before {
       content: '';
       position: absolute;
@@ -291,18 +225,10 @@
       background: linear-gradient(180deg, rgba(34,197,94,0.25), rgba(34,197,94,0.05));
       pointer-events: none;
     }
-
     .dayCell.today { outline: 2px solid rgba(37,99,235,0.7); }
     .dayCell.selected { outline: 2px solid rgba(34,197,94,0.9); }
-
     /* Lists */
-    .list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
+    .list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
     .listItem {
       border: 1px solid var(--border);
       border-radius: 16px;
@@ -314,20 +240,15 @@
       align-items: center;
       gap: 10px;
     }
-
     .listItem .title { font-weight: 900; }
     .listItem .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
     .listItem .right { text-align: right; }
     .listItem .right .big { font-weight: 900; color: var(--accent); font-size: 18px; }
     .listItem .right .small { color: var(--muted); font-size: 12px; margin-top: 4px; }
-
     /* Charts */
     canvas { width: 100%; height: 190px; display: block; }
-
     .miniNote { font-size: 12px; color: var(--muted); margin-top: 8px; }
-
     .hidden { display: none; }
-
     .chipRow { display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; }
     .chip {
       border: 1px solid var(--border);
@@ -340,7 +261,6 @@
       user-select:none;
     }
     .chip.active { outline: 2px solid rgba(34,197,94,0.9); }
-
     .statusPill{
       display:inline-flex;
       align-items:center;
@@ -357,18 +277,24 @@
     .dot.ok{ background:rgba(34,197,94,.9); }
     .dot.warn{ background:rgba(245,158,11,.95); }
     .dot.bad{ background:rgba(239,68,68,.95); }
-
-    details summary { cursor:pointer; color:#e2e8f0; font-weight:900; }
-    pre {
-      white-space: pre-wrap;
-      word-break: break-word;
-      background: rgba(2,6,23,0.7);
+    .toast{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 16px;
+      background: rgba(2,6,23,0.92);
       border: 1px solid var(--border);
-      padding: 12px;
-      border-radius: 14px;
-      color: #d1d5db;
-      margin-top: 10px;
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 900;
+      color: #e2e8f0;
+      display: none;
+      max-width: 92vw;
+      z-index: 9999;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     }
+    .toast.show{ display:block; }
   </style>
 </head>
 <body>
@@ -381,7 +307,7 @@
     </div>
     <div class="miniNote" style="color:#fde68a;">
       You opened this app as a local file (<b>file://</b>). Browsers typically block Google Sheets syncing from local files.
-      Host it on <b>GitHub Pages</b> (recommended) or run a local server (<b>http://localhost</b>).
+      Use <b>GitHub Pages</b> (recommended) or run a local server (<b>http://localhost</b>).
     </div>
   </div>
 
@@ -395,9 +321,9 @@
       </div>
     </div>
 
-    <div class="label">Google Apps Script URL</div>
-    <input id="apiUrl" placeholder="Paste Google Apps Script /exec URL" />
-    <div class="miniNote">Saved on this device so you only paste it once.</div>
+    <div class="label">Google Apps Script /exec URL</div>
+    <input id="apiUrl" placeholder="Paste your deployed Apps Script /exec URL" />
+    <div class="miniNote">Saved on this device (paste once).</div>
 
     <div class="btnRow">
       <button class="secondary" onclick="importFromSheets()">Restore from Google Sheets</button>
@@ -422,89 +348,6 @@
     </div>
 
     <button onclick="logSet()">Log Set</button>
-
-    <details style="margin-top:12px;">
-      <summary>Google Apps Script code (auto-creates Sets + Daily tabs)</summary>
-      <div class="miniNote">
-        Your Google Sheet can be empty — this script auto-creates tabs:
-        <ul style="margin:8px 0 0 18px;">
-          <li><b>Sets</b>: date, reps, type</li>
-          <li><b>Daily</b>: day, totalReps, sets, typesJson</li>
-        </ul>
-        Deploy as a Web App: Execute as <b>Me</b>, Access <b>Anyone</b>.
-      </div>
-      <pre>
-// Apps Script (paste into Extensions → Apps Script)
-function ensureSheet_(name, headers) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sh = ss.getSheetByName(name);
-  if (!sh) sh = ss.insertSheet(name);
-  if (sh.getLastRow() === 0) sh.appendRow(headers);
-  return sh;
-}
-
-function doPost(e) {
-  try {
-    const body = JSON.parse((e && e.postData && e.postData.contents) ? e.postData.contents : "{}");
-    const action = body.action || "set";
-
-    const setsSh = ensureSheet_("Sets", ["date","reps","type"]);
-    const dailySh = ensureSheet_("Daily", ["day","totalReps","sets","typesJson"]);
-
-    if (action === "set") {
-      setsSh.appendRow([body.date, Number(body.reps) || 0, body.type || "Standard"]);
-    }
-
-    if (action === "daily") {
-      const day = body.day; // YYYY-MM-DD
-      const totalReps = Number(body.totalReps) || 0;
-      const sets = Number(body.sets) || 0;
-      const typesJson = JSON.stringify(body.types || {});
-
-      // upsert by day
-      const values = dailySh.getDataRange().getValues();
-      let rowIndex = -1;
-      for (let i = 1; i &lt; values.length; i++) {
-        if (String(values[i][0]) === String(day)) { rowIndex = i + 1; break; }
-      }
-      if (rowIndex === -1) {
-        dailySh.appendRow([day, totalReps, sets, typesJson]);
-      } else {
-        dailySh.getRange(rowIndex, 2, 1, 3).setValues([[totalReps, sets, typesJson]]);
-      }
-    }
-
-    return ContentService
-      .createTextOutput(JSON.stringify({status:"ok"}))
-      .setMimeType(ContentService.MimeType.JSON);
-
-  } catch (err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({error:String(err)}))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function doGet() {
-  const setsSh = ensureSheet_("Sets", ["date","reps","type"]);
-  const values = setsSh.getDataRange().getValues();
-  if (values.length &lt; 2) {
-    return ContentService
-      .createTextOutput(JSON.stringify([]))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-  values.shift(); // remove headers
-  const rows = values.map(r =&gt; ({
-    date: r[0],
-    reps: Number(r[1]) || 0,
-    type: r[2] || "Standard"
-  }));
-  return ContentService
-    .createTextOutput(JSON.stringify(rows))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-      </pre>
-    </details>
   </div>
 
   <!-- Goal + Progress -->
@@ -663,7 +506,7 @@ function doGet() {
       <button onclick="downloadCSV()">⬇️ Download Log as CSV</button>
       <button class="danger" onclick="resetLocalData()">Reset Local Data</button>
     </div>
-    <div class="miniNote">Reset only clears this device. Your Google Sheet (cloud) stays intact.</div>
+    <div class="miniNote">Reset only clears this device. Your Google Sheet stays intact.</div>
   </div>
 
   <!-- Personal Records -->
@@ -729,6 +572,8 @@ function doGet() {
 
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
 /* =============================
    Storage
@@ -749,12 +594,17 @@ function storageAvailable() {
   }
 }
 
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(window.__toastT);
+  window.__toastT = setTimeout(()=>el.classList.remove('show'), 2400);
+}
+
 function getLog(){
   try {
-    if (!storageAvailable()) {
-      console.warn('localStorage unavailable');
-      return window.__MEM_LOG || [];
-    }
+    if (!storageAvailable()) return window.__MEM_LOG || [];
     return JSON.parse(localStorage.getItem(LS_LOG) || '[]');
   } catch {
     return window.__MEM_LOG || [];
@@ -764,10 +614,7 @@ function getLog(){
 function saveLog(d){
   if (!storageAvailable()) {
     window.__MEM_LOG = d;
-    alert(
-      "⚠️ Storage is blocked in this browser mode. Data will reset when the page reloads.\n\n" +
-      "Open the file in a normal browser window (not private/incognito)."
-    );
+    alert("⚠️ Storage is blocked. Data may reset when you reload.\n\nUse a normal (non-incognito) window.");
     return;
   }
   localStorage.setItem(LS_LOG, JSON.stringify(d));
@@ -862,8 +709,6 @@ function sumRangeByDay(byDay, startDate, days){
 
 /* =============================
    Google Sheets Sync
-   - action=set : append each set to Sets tab
-   - action=daily : upsert daily totals to Daily tab
 ============================= */
 function postJson(url, payload){
   return fetch(url, {
@@ -895,24 +740,43 @@ function syncToSheets(payload){
 
   postJson(url, payload)
     .then(() => setSyncStatus('ok','Synced'))
-    .catch(() => queuePayload(payload));
+    .catch(() => {
+      queuePayload(payload);
+      setSyncStatus('warn', 'Queued');
+    });
 }
 
-function retryQueuedSync(){
+/* ✅ FIXED: retry sequentially (Apps Script friendly) */
+async function retryQueuedSync(){
   const url = getApiUrl();
-  if (!url) { setSyncStatus('warn','Add Script URL'); return; }
-  if (!isHosted()) { setSyncStatus('warn','file:// blocks sync'); return; }
+  if (!url) { setSyncStatus('warn','Add Script URL'); toast('Paste your /exec URL first'); return; }
+  if (!isHosted()) { setSyncStatus('warn','file:// blocks sync'); toast('Open from GitHub Pages'); return; }
 
-  const q = getQueue();
-  if (!q.length) { setSyncStatus('ok','Nothing queued'); return; }
+  let queue = getQueue();
+  if (!queue.length) { setSyncStatus('ok','Nothing queued'); toast('No pending items'); return; }
 
-  setSyncStatus('warn', `Retrying (${q.length})`);
+  setSyncStatus('warn', `Retrying (${queue.length})`);
+  toast(`Retrying ${queue.length} item(s)…`);
+
   const remaining = [];
-  Promise.all(q.map(item => postJson(url, item).catch(() => remaining.push(item))))
-    .finally(() => {
-      saveQueue(remaining);
-      setSyncStatus(remaining.length ? 'warn' : 'ok', remaining.length ? `Queued (${remaining.length})` : 'Synced');
-    });
+  for (const payload of queue) {
+    try {
+      await postJson(url, payload);
+    } catch (err) {
+      remaining.push(payload);
+      break; // stop on first failure
+    }
+  }
+
+  saveQueue(remaining);
+
+  if (remaining.length === 0) {
+    setSyncStatus('ok','Synced');
+    toast('All queued items synced ✅');
+  } else {
+    setSyncStatus('warn', `Queued (${remaining.length})`);
+    toast(`Still queued: ${remaining.length}`);
+  }
 }
 
 /* =============================
@@ -922,7 +786,7 @@ function entryKey(e){ return `${e.date}|${e.reps}|${e.type}`; }
 
 async function importFromSheets(){
   const url = getApiUrl();
-  if (!url) return alert('Paste your Google Apps Script /exec URL first');
+  if (!url) return alert('Paste your Apps Script /exec URL first');
 
   setSyncStatus('warn','Restoring…');
 
@@ -934,13 +798,12 @@ async function importFromSheets(){
     if (!Array.isArray(remote)) throw new Error('Invalid JSON');
   } catch (e) {
     setSyncStatus('bad','Restore failed');
-    alert('Failed to fetch data from Google Sheets. Confirm your /exec URL shows JSON in the browser.');
+    alert('Restore failed. Open your /exec URL in a browser — it should show JSON like [] or rows.');
     return;
   }
 
   const local = getLog();
   const map = new Map();
-
   for (const e of local) map.set(entryKey(e), e);
   for (const e of remote) map.set(entryKey(e), e);
 
@@ -953,7 +816,7 @@ async function importFromSheets(){
 }
 
 /* =============================
-   Logging
+   Logging + Daily Summary push
 ============================= */
 function computeByDay(log){
   const byDay = {};
@@ -980,7 +843,6 @@ function pushDailySummaryToSheets(byDay, dayKey){
   });
 }
 
-// Must be global because HTML uses onclick="logSet()".
 function logSet(){
   const reps = Number(document.getElementById('reps').value);
   const type = String(document.getElementById('type').value || 'Standard');
@@ -992,15 +854,14 @@ function logSet(){
   d.push(entry);
   saveLog(d);
 
-  // post set row
   syncToSheets({ action: 'set', ...entry });
 
-  // post daily upsert
   const byDay = computeByDay(d);
   pushDailySummaryToSheets(byDay, entry.date.slice(0,10));
 
   document.getElementById('reps').value='';
   render();
+  toast('Set logged ✅');
 }
 
 /* =============================
@@ -1011,6 +872,7 @@ function saveGoal(){
   if (!n || n <= 0) return alert('Enter a valid daily goal');
   setGoal(n);
   render();
+  toast('Goal saved');
 }
 
 function computeStreak(byDay, goal){
@@ -1060,7 +922,7 @@ function computeConsecutiveWeeks(byWeek){
 }
 
 /* =============================
-   Panels
+   Panels + Calendar
 ============================= */
 let calCursor = new Date();
 let calSelected = isoDate();
@@ -1093,9 +955,6 @@ function setSelected(day){
   render();
 }
 
-/* =============================
-   Calendar
-============================= */
 function renderCalendar(byDay){
   const dow = document.getElementById('calDow');
   dow.innerHTML = '';
@@ -1132,10 +991,7 @@ function renderCalendar(byDay){
     if (key === todayKey) cell.classList.add('today');
     if (key === calSelected) cell.classList.add('selected');
 
-    cell.innerHTML = `
-      <div class="num">${d.getDate()}</div>
-      ${total > 0 ? `<div class="sum">${total}</div>` : ''}
-    `;
+    cell.innerHTML = `<div class="num">${d.getDate()}</div>${total > 0 ? `<div class="sum">${total}</div>` : ''}`;
     cell.addEventListener('click', () => setSelected(key));
     grid.appendChild(cell);
   }
@@ -1167,7 +1023,7 @@ function weekRangeLabel(weekStart){
   return `${a}–${b}`;
 }
 
-function renderWeeklyReport(byDay, log, byWeek){
+function renderWeeklyReport(byDay, log){
   const now = new Date();
   const thisWeekStart = startOfISOWeek(now);
   const lastWeekStart = new Date(thisWeekStart);
@@ -1322,9 +1178,7 @@ function renderBreakdown(byDay, byWeek){
     `;
 
     item.addEventListener('click', () => { breakdownSelectedWeek = wk; render(); });
-
     if (wk === breakdownSelectedWeek) item.style.outline = '2px solid rgba(34,197,94,0.9)';
-
     weekList.appendChild(item);
   });
 
@@ -1389,7 +1243,6 @@ function renderWeekDetails(byDay, weekKey){
         <div class="small">reps</div>
       </div>
     `;
-
     daysList.appendChild(item);
   }
 
@@ -1545,7 +1398,6 @@ function computeAchievements(byDay, log, goal, byWeek, byMonth){
     const hit = Object.values(byDay).filter(d=>d.total >= goal).length;
     if (hit >= 7) out.push('🎯 Hit your daily goal 7 times');
   }
-
   return out;
 }
 
@@ -1568,12 +1420,13 @@ function downloadCSV(){
 }
 
 function resetLocalData(){
-  if(!confirm('This will clear this device only. Continue?')) return;
+  if(!confirm('This clears ONLY this device. Continue?')) return;
   localStorage.removeItem(LS_LOG);
   localStorage.removeItem(LS_GOAL);
   localStorage.removeItem(LS_QUEUE);
   render();
   setSyncStatus('warn','Local reset');
+  toast('Local data cleared');
 }
 
 /* =============================
@@ -1665,7 +1518,7 @@ function render(){
   setTrend('weeklyAvgTrend', pctChange(thisWeekTotal, lastWeekTotal));
 
   renderCalendar(byDay);
-  renderWeeklyReport(byDay, log, byWeek);
+  renderWeeklyReport(byDay, log);
   renderMonthlyReport(byDay, byMonth, byWeek);
   renderBreakdown(byDay, byWeek);
 
@@ -1720,7 +1573,7 @@ function render(){
     hist.appendChild(div);
   });
 
-  // sync pill baseline state
+  // status baseline
   const url = getApiUrl();
   const q = getQueue();
   if (!url) setSyncStatus('warn','Add Script URL');
@@ -1733,14 +1586,11 @@ function render(){
    Init
 ============================= */
 (function init(){
-  // host warning
-  if (!isHosted()) {
-    document.getElementById('hostWarning').style.display = 'block';
-  }
+  if (!isHosted()) document.getElementById('hostWarning').style.display = 'block';
 
-  // API URL persistence wiring
+  // persist url
   const apiInput = document.getElementById('apiUrl');
-  apiInput.value = getApiUrl() || '';
+  apiInput.value = getApiUrl();
   apiInput.addEventListener('input', (e) => {
     setApiUrl(e.target.value);
     render();
